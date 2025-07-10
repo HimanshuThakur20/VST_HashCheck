@@ -2,7 +2,7 @@
 """
 vt_hash_lookup.py — VirusTotal hash scanner with progress, cache, and malicious summary
 
-Version 1.7 — 2025-07-09
+Version 1.8 — 2025-07-09
 """
 
 from __future__ import annotations
@@ -127,6 +127,10 @@ def print_table(rows: List[Dict[str, Any]]) -> None:
 def main() -> None:
     args = parse_args()
 
+    if args.insecure:
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
     if not args.hashes and not args.file:
         print("[!] Provide hashes or use --file", file=sys.stderr)
         sys.exit(1)
@@ -206,7 +210,7 @@ def main() -> None:
         print_table(results)
 
     # ───── Final Summary ─────
-    malicious: List[Tuple[str, str]] = []  # (hash, "score")
+    malicious: List[Tuple[str, str]] = []
     suspicious: List[str] = []
 
     for r in results:

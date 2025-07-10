@@ -2,7 +2,7 @@
 """
 vt_hash_lookup.py — VirusTotal hash scanner with progress, cache, and malicious summary
 
-Version 1.6 — 2025-07-09
+Version 1.7 — 2025-07-09
 """
 
 from __future__ import annotations
@@ -65,13 +65,14 @@ def parse_args() -> argparse.Namespace:
                    help="Print results every N hashes (0 = disable)")
     p.add_argument("--no-progress", action="store_true", help="Disable progress bar")
     p.add_argument("--verbose", "-v", action="store_true", help="Extra debug info")
+    p.add_argument("--insecure", action="store_true", help="Disable SSL certificate verification (insecure)")
     return p.parse_args()
 
 
-def vt_request(hash_: str, api_key: str) -> Dict[str, Any] | None:
+def vt_request(hash_: str, api_key: str, verify_ssl: bool = True) -> Dict[str, Any] | None:
     headers = {"x-apikey": api_key}
     while True:
-        resp = requests.get(API_URL.format(hash_), headers=headers)
+        resp = requests.get(API_URL.format(hash_), headers=headers, verify=verify_ssl)
         if resp.status_code == 200:
             return resp.json()
         if resp.status_code == 404:
@@ -180,7 +181,7 @@ def main() -> None:
             if wait > 0:
                 time.sleep(wait)
             try:
-                resp = vt_request(h, api_key)
+                resp = vt_request(h, api_key, verify_ssl=not args.insecure)
             except requests.RequestException as e:
                 print(f"[!] Error querying {h}: {e}", file=sys.stderr)
                 resp = None
